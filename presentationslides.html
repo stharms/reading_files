@@ -39,6 +39,12 @@ Some simple examples:
 
 - base R supports reading text files, e.g. `read.table()`, `read.csv()`, `read.delim()` reads data from text files files with specified delimiters
 - Package `readr` also provides convenient similar functions with `read_*()` but is faster than base R
+  + It's part of the tidyverse
+
+```r
+library(tidyverse)
+```
+  
 
 - `fread()` from package `data.table` is faster than both of the above, but syntax is less intuitive 
 
@@ -375,9 +381,9 @@ read_csv('18collegebasketball.csv',
   labs(y='KU Margin of Victory')
 ```
 
-![](presentationslides_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
----
 ![](presentationslides_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
+---
+![](presentationslides_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
 
 
 
@@ -510,9 +516,9 @@ ggplot(data=kscountymap,
   scale_fill_gradient2(low="red", high="blue")
 ```
 
-![](presentationslides_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
----
 ![](presentationslides_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
+---
+![](presentationslides_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
 ---
 # Converting JSON
 - Web data increasingly comes in JSON format for portability
@@ -533,7 +539,7 @@ weather_data
 
 ```
 ## Response [https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json]
-##   Date: 2020-01-04 22:08
+##   Date: 2020-01-04 22:26
 ##   Status: 200
 ##   Content-Type: application/json;charset=utf-8
 ##   Size: 1.24 kB

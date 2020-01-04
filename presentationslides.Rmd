@@ -46,6 +46,11 @@ Some simple examples:
 
 - base R supports reading text files, e.g. `read.table()`, `read.csv()`, `read.delim()` reads data from text files files with specified delimiters
 - Package `readr` also provides convenient similar functions with `read_*()` but is faster than base R
+  + It's part of the tidyverse
+```{r, echo=T}
+library(tidyverse)
+```
+  
 
 - `fread()` from package `data.table` is faster than both of the above, but syntax is less intuitive 
 
