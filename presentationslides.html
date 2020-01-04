@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Reading Files in R</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Steve Harms" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Reading Files in R
+### Steve Harms
+### 1/11/2020
+
+---
+
+
+
+
+---
+# Overview
+
+**Goal** : Import data into your R workspace in the form of a data.frame
+
+Some simple examples:
+
+- Reading common file types: .csv, Excel, text/delimited
+  
+  If time allows:
+  
+- html , JSON , and web APIs
+
+- Reading from databases
+---
+# Reading from common file types
+
+- base R supports reading text files, e.g. `read.table()`, `read.csv()`, `read.delim()` reads data from text files files with specified delimiters
+- Package `readr` also provides convenient similar functions with `read_*()` but is faster than base R
+
+- `fread()` from package `data.table` is faster than both of the above, but syntax is less intuitive 
+
+---
+# General process for reading files:
+- Locate file, note its size
+- Read in data
+- Name/Re-name columns
+- Check:
+  + Dimension to make sure all was read in correctly
+  + First and last few rows
+  + Structure of the dataframe to ensure data types are correct
+  + Numerical summaries
+
+---
+# Reading csv files
+- File '18collegebasketball.csv' contains all the scores from every Division 1 NCAA College Basketball game in 2018-19 season
+- This is clean data, so it's relatively easy to read with your method of choice (base R here):
+
+
+```r
+cbb_games &lt;- read.csv('18collegebasketball.csv',
+                      stringsAsFactors=TRUE)
+dim(cbb_games)
+```
+
+```
+## [1] 5909    6
+```
+
+```r
+str(cbb_games)
+```
+
+```
+## 'data.frame':	5909 obs. of  6 variables:
+##  $ gameid   : num  2.02e+08 2.02e+08 2.02e+08 2.02e+08 2.02e+08 ...
+##  $ home     : Factor w/ 355 levels "Abilene Christian",..: 134 138 104 332 298 192 350 331 18 232 ...
+##  $ homescore: int  92 84 120 73 86 86 67 100 101 84 ...
+##  $ away     : Factor w/ 648 levels "Abilene Christian",..: 328 147 234 565 276 57 380 358 495 438 ...
+##  $ awayscore: int  87 118 79 42 41 70 78 77 58 57 ...
+##  $ date     : Factor w/ 131 levels "1/1/2019","1/10/2019",..: 53 53 53 53 53 53 53 53 53 53 ...
+```
+
+---
+
+# Specifying column types:
+- Note that gameid is specified to be a numeric variable
+- By default, `read_csv()` will guess data types based on the first 1000 rows in the file.
+- If you want to instead specify the column types, use the `col_types` argument:
+
+
+```r
+cbb_games &lt;- read_csv('18collegebasketball.csv',
+                      col_types = list('gameid' = col_character()))
+cbb_games %&gt;% head()
+```
+
+```
+## # A tibble: 6 x 6
+##   gameid    home      homescore away           awayscore date     
+##   &lt;chr&gt;     &lt;chr&gt;         &lt;dbl&gt; &lt;chr&gt;              &lt;dbl&gt; &lt;chr&gt;    
+## 1 201811061 Kansas           92 Michigan State        87 11/6/2018
+## 2 201811062 Kentucky         84 Duke                 118 11/6/2018
+## 3 201811063 Gonzaga         120 Idaho State           79 11/6/2018
+## 4 201811064 Virginia         73 Towson                42 11/6/2018
+## 5 201811065 Tennessee        86 Lenoir-Rhyne          41 11/6/2018
+## 6 201811066 Nevada           86 Brigham Young         70 11/6/2018
+```
+
+---
+# `type_convert()`
+
+- If data isn't clean, you may need to read it in and clean it before you  convert to the data type you want
+- The `type_convert()` function is like the `col_types` argument in `read_*` but is used after the data is read in
+- Process:
+  + Read in data as character vector
+  + Cleaning/munging manually to remove extra characters / NAs / Invalid entries
+  + `type_convert()` to convert to column types you want (or let it guess)
+- Ex) Want to split time into time + morning/night column, convert time to numeric:
+
+
+```r
+read_csv('Ames_weather_2017_2018.csv', col_types='ccccccc')
+```
+
+```
+## # A tibble: 2,976 x 7
+##    date     time     icon  wind  temp_low temp_high weather        
+##    &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;          
+##  1 1/1/2017 12:00 AM 13    6     19       21        Clear.         
+##  2 1/1/2017 6:00 AM  6     7     19       34        Partly sunny.  
+##  3 1/1/2017 12:00 PM 6     7     36       37        Partly sunny.  
+##  4 1/1/2017 6:00 PM  17    11    36       36        Overcast.      
+##  5 1/2/2017 12:00 AM 17    11    34       36        Overcast.      
+##  6 1/2/2017 6:00 AM  18    9     34       36        Drizzle. Fog.  
+##  7 1/2/2017 12:00 PM 18    7     36       37        Drizzle. Fog.  
+##  8 1/2/2017 6:00 PM  14    6     36       37        Passing clouds.
+##  9 1/3/2017 12:00 AM 17    13    34       36        Overcast.      
+## 10 1/3/2017 6:00 AM  7     21    21       32        Overcast.      
+## # ... with 2,966 more rows
+```
+
+---
+
+
+```r
+#read in as character, clean up times, then let readr convert
+read_csv('Ames_weather_2017_2018.csv',
+         col_types='ccccccc') %&gt;%
+  mutate(`AM/PM` = str_sub(time, start=-2L),
+         time = str_remove_all(time,':00 .M')) %&gt;%
+  select(date,time, `AM/PM`, 3:7) %&gt;%
+  type_convert(col_types=cols()) %&gt;%
+  str()
+```
+
+```
+## Classes 'tbl_df', 'tbl' and 'data.frame':	2976 obs. of  8 variables:
+##  $ date     : chr  "1/1/2017" "1/1/2017" "1/1/2017" "1/1/2017" ...
+##  $ time     : num  12 6 12 6 12 6 12 6 12 6 ...
+##  $ AM/PM    : chr  "AM" "AM" "PM" "PM" ...
+##  $ icon     : num  13 6 6 17 17 18 18 14 17 7 ...
+##  $ wind     : num  6 7 7 11 11 9 7 6 13 21 ...
+##  $ temp_low : num  19 19 36 36 34 34 36 36 34 21 ...
+##  $ temp_high: num  21 34 37 36 36 36 37 37 36 32 ...
+##  $ weather  : chr  "Clear." "Partly sunny." "Partly sunny." "Overcast." ...
+```
+
+---
+
+# Specifying column types (base R):
+- If you prefer base R, you can use the `colClasses` argument to specify them individually
+- `read.csv()` and `read.table()` will guess data types based on the first few lines
+- Default is to read character strings in as a factor data type. This can be changed by setting `stringsAsFactors=TRUE` (overwritten by `colClasses`)
+
+
+```r
+cbb_games &lt;- read.csv('18collegebasketball.csv',
+                      colClasses=c('character', 'character', 'integer',
+                                   'character', 'integer','character')
+)
+
+str(cbb_games)
+```
+
+```
+## 'data.frame':	5909 obs. of  6 variables:
+##  $ gameid   : chr  "201811061" "201811062" "201811063" "201811064" ...
+##  $ home     : chr  "Kansas" "Kentucky" "Gonzaga" "Virginia" ...
+##  $ homescore: int  92 84 120 73 86 86 67 100 101 84 ...
+##  $ away     : chr  "Michigan State" "Duke" "Idaho State" "Towson" ...
+##  $ awayscore: int  87 118 79 42 41 70 78 77 58 57 ...
+##  $ date     : chr  "11/6/2018" "11/6/2018" "11/6/2018" "11/6/2018" ...
+```
+---
+# Setting column names and row names
+- Get and set the names of your variables with `colnames()` or `names()`
+
+
+```r
+colnames(cbb_games) &lt;- c('gameid', 'home_team', 'home_score',
+                         'away_team', 'away_score', 'date')
+names(cbb_games)[1] &lt;- c('game_id')
+
+head(cbb_games)
+```
+
+```
+##     game_id home_team home_score      away_team away_score      date
+## 1 201811061    Kansas         92 Michigan State         87 11/6/2018
+## 2 201811062  Kentucky         84           Duke        118 11/6/2018
+## 3 201811063   Gonzaga        120    Idaho State         79 11/6/2018
+## 4 201811064  Virginia         73         Towson         42 11/6/2018
+## 5 201811065 Tennessee         86   Lenoir-Rhyne         41 11/6/2018
+## 6 201811066    Nevada         86  Brigham Young         70 11/6/2018
+```
+
+---
+
+# Reading from Excel files
+- Package `readxl` provides easy functions for reading MS Excel files
+- Note it will only read one sheet, defaulting to the first unless specified
+- `read_xlsx` has similar arguments to `read_csv`
+- Example: Here, there are some notes at the top:
+
+
+
+```r
+ex &lt;- readxl::read_xlsx('18collegebasketball.xlsx')
+```
+
+```r
+head(ex)
+```
+
+```
+## # A tibble: 6 x 6
+##   `This is a list of college basketba~ ..2     ..3    ..4      ..5    ..6  
+##   &lt;chr&gt;                                &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;
+## 1 I removed a few of the  values as w~ &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;     &lt;NA&gt;   &lt;NA&gt; 
+## 2 gameid                               home    homes~ away     aways~ date 
+## 3 201811061                            Kansas  92     Michiga~ 87     43410
+## 4 201811062                            Kentuc~ 84     Duke     118    43410
+## 5 201811063                            Gonzaga 120    Idaho S~ 79     43410
+## 6 201811064                            Virgin~ 73     Towson   42     43410
+```
+
+---
+# Reading from Excel Example
+- You can skip the first few lines with the `skip` argument and only read in the data:
+
+
+```r
+readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
+```
+
+```
+## # A tibble: 5,909 x 6
+##        gameid home     homescore away         awayscore date               
+##         &lt;dbl&gt; &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;            &lt;dbl&gt; &lt;dttm&gt;             
+##  1  201811061 Kansas          92 Michigan St~        87 2018-11-06 00:00:00
+##  2  201811062 Kentucky        84 Duke               118 2018-11-06 00:00:00
+##  3  201811063 Gonzaga        120 Idaho State         79 2018-11-06 00:00:00
+##  4  201811064 Virginia        73 Towson              42 2018-11-06 00:00:00
+##  5  201811065 Tenness~        86 Lenoir-Rhyne        41 2018-11-06 00:00:00
+##  6  201811066 Nevada          86 Brigham You~        70 2018-11-06 00:00:00
+##  7  201811067 Wofford         67 North Carol~        78 2018-11-06 00:00:00
+##  8  201811068 Villano~       100 Morgan State        77 2018-11-06 00:00:00
+##  9  201811069 Auburn         101 South Alaba~        58 2018-11-06 00:00:00
+## 10 2018110610 Oregon          84 Portland St~        57 2018-11-06 00:00:00
+## # ... with 5,899 more rows
+```
+
+
+---
+# Other common file types / situations
+
+- For general tab/comma/whitespace delimited files: 
+  + `read.table`/`read_table`, specify the delmiter with `sep` argument
+  + `read.delim`/`read_delim` and specify the delimiter with `delim` argument
+  
+- For fixed width files, `read.fwf`/`read_fwf` for fixed width files
+  + This format can often be read faster than less-structured data
+  
+- For unstructured text files, use `readLines` or `read_lines`
+
+- For extra large files, `read_csv_chunked` can read a file in chunks
+  + Useful when you want to aggregate or filter the data without reading into memory
+  
+---
+# Reading a csv in chunks
+
+
+```r
+#filter the csv file to only KU's home games
+f&lt;- function(x, pos) filter(x, home=='Kansas')
+
+#but do it in chunks of size 100
+KU &lt;- read_csv_chunked('18collegebasketball.csv',
+                       callback = DataFrameCallback$new(f),
+                       chunk_size=100, col_types = cols())
+KU %&gt;% summary()
+```
+
+```
+##      gameid              home             homescore         away          
+##  Min.   :2.018e+08   Length:23          Min.   :63.00   Length:23         
+##  1st Qu.:2.020e+11   Class :character   1st Qu.:73.00   Class :character  
+##  Median :2.020e+11   Mode  :character   Median :79.00   Mode  :character  
+##  Mean   :1.616e+11                      Mean   :78.83                     
+##  3rd Qu.:2.020e+11                      3rd Qu.:87.00                     
+##  Max.   :2.020e+11                      Max.   :92.00                     
+##    awayscore         date          
+##  Min.   :47.00   Length:23         
+##  1st Qu.:61.50   Class :character  
+##  Median :68.00   Mode  :character  
+##  Mean   :67.78                     
+##  3rd Qu.:76.00                     
+##  Max.   :87.00
+```
+---
+
+# URLs work too
+- Previous example was only for a file downloaded locally
+- If the file is located at a url instead, can pass the url directly to your `read_*`
+- Now, `read_csv()` downloads a temp file of ages of different members of Congress:
+
+
+```r
+read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/congress-age/congress-terms.csv", col_types = cols())
+```
+
+```
+## # A tibble: 18,635 x 13
+##    congress chamber bioguide firstname middlename lastname suffix
+##       &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;    &lt;chr&gt; 
+##  1       80 house   M000112  Joseph    Jefferson  Mansfie~ &lt;NA&gt;  
+##  2       80 house   D000448  Robert    Lee        Doughton &lt;NA&gt;  
+##  3       80 house   S000001  Adolph    Joachim    Sabath   &lt;NA&gt;  
+##  4       80 house   E000023  Charles   Aubrey     Eaton    &lt;NA&gt;  
+##  5       80 house   L000296  William   &lt;NA&gt;       Lewis    &lt;NA&gt;  
+##  6       80 house   G000017  James     A.         Gallagh~ &lt;NA&gt;  
+##  7       80 house   W000265  Richard   Joseph     Welch    &lt;NA&gt;  
+##  8       80 house   B000565  Sol       &lt;NA&gt;       Bloom    &lt;NA&gt;  
+##  9       80 house   H000943  Merlin    &lt;NA&gt;       Hull     &lt;NA&gt;  
+## 10       80 house   G000169  Charles   Laceille   Gifford  &lt;NA&gt;  
+## # ... with 18,625 more rows, and 6 more variables: birthday &lt;date&gt;,
+## #   state &lt;chr&gt;, party &lt;chr&gt;, incumbent &lt;chr&gt;, termstart &lt;date&gt;, age &lt;dbl&gt;
+```
+---
+# Final Example
+- Reading data in is only the first step in many:
+
+```r
+read_csv('18collegebasketball.csv',
+         col_names=c('gameid', 'home_team', 'home_score',
+                     'away_team', 'away_score', 'date'),
+         col_types=cols(),
+         skip = 1) %&gt;% 
+  filter(home_team == 'Kansas' | away_team == 'Kansas') %&gt;%
+  mutate(
+    point_diff = if_else(home_team=='Kansas',
+                         home_score-away_score,
+                         away_score-home_score),
+    date=lubridate::mdy(date)
+  ) %&gt;%
+  ggplot() +
+  geom_col(aes(x=date, y=point_diff, fill=(point_diff&gt;0))) +
+  theme_bw() +
+  theme(legend.position= 'none') +
+  scale_x_date(date_breaks="2 weeks", date_labels = "%m/%d") +
+  scale_fill_brewer(palette='Set1') +
+  labs(y='KU Margin of Victory')
+```
+
+![](presentationslides_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+---
+![](presentationslides_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
+
+
+
+---
+
+# Writing files out
+- When you're done cleaning or analyzing your data, you can write the results out just like you got them in
+- If you are looking for a quick copy/paste, just use `print()` and set `row.names=FALSE`
+- Note: `write.csv()` writes row names by default, `write_csv()` does not
+- If you are processing data in chunks, it may also be useful to write the output into the same file by setting `append=TRUE`
+
+
+
+```r
+write.csv(KU, 'KUgames1819.csv')
+write_csv(KU, 'KUgames1819.csv', append = TRUE)
+```
+
+---
+# Writing Excel Files
+- The `writexl` package allows for writing data.frames to .xlsx files
+- If you pass a list of dataframes, it will write each dataframe to a separate sheet in the Excel file
+
+
+```r
+library(writexl)
+
+KU &lt;- cbb_games %&gt;%
+  filter(home_team=='Kansas' | away_team=='Kansas')
+
+ISU &lt;- cbb_games %&gt;%
+  filter(home_team=='Iowa State' | away_team=='Iowa State')
+```
+
+```r
+write_xlsx(x=list("KU"=KU,"IowaState"=ISU),
+           path='KUandISU19.xlsx')
+```
+
+---
+
+
+# data.table
+- If dealing with really large files (but still small enough to fit in RAM), data.table is as fast as it gets
+- Use `fread` and `fwrite`
+- Really only worth it to use this when files are large and speed becomes an issue
+
+
+```r
+#this is actually slower than read_csv() because the file is small
+data.table::fread('18collegebasketball.csv') %&gt;% 
+  summary()
+```
+
+```
+##      gameid              home             homescore     
+##  Min.   :2.018e+08   Length:5909        Min.   : 24.00  
+##  1st Qu.:2.020e+11   Class :character   1st Qu.: 67.00  
+##  Median :2.020e+11   Mode  :character   Median : 75.00  
+##  Mean   :1.710e+11                      Mean   : 75.85  
+##  3rd Qu.:2.020e+11                      3rd Qu.: 84.00  
+##  Max.   :2.020e+11                      Max.   :148.00  
+##      away             awayscore          date          
+##  Length:5909        Min.   : 29.00   Length:5909       
+##  Class :character   1st Qu.: 60.00   Class :character  
+##  Mode  :character   Median : 68.00   Mode  :character  
+##                     Mean   : 68.52                     
+##                     3rd Qu.: 77.00                     
+##                     Max.   :118.00
+```
+
+---
+# Other resources
+  - Learning R (Cotton) , chapter 12
+  - R Cookbook , chapter 5
+  - R for Data Science , chapter 11
+  
+---
+# Reading html/XML
+
+- Reading data from the web via API or web scraping is becoming increasingly important
+- For web scraping and reading XML or HTML files, R offers several good packages
+- My personal favorites are `rvest` and `XML2`
+---
+# Reading html/XML
+- Web scraping in R is another topic entirely, but a quick example of how easy it can be
+- `read_html()` will read the entire html file
+- `html_table()` will find all tables in the page and parse
+- NYTimes results from the 2016 Election by KS county:
+
+
+```r
+library(rvest)
+ksurl &lt;- "http://www.nytimes.com/elections/results/kansas"
+kstables &lt;- read_html(ksurl) %&gt;% html_table(fill=T)
+
+head(kstables[[2]])
+```
+
+```
+##   Vote by county   Trump Clinton
+## 1        Johnson 137,490 129,852
+## 2       Sedgwick 104,353  69,627
+## 3        Shawnee  35,934  33,926
+## 4        Douglas  14,688  31,195
+## 5      Wyandotte  15,806  30,146
+## 6    Leavenworth  17,638  10,209
+```
+---
+- After a little work, you can turn it into a map...
+
+
+```r
+kscountyvote &lt;- kstables[[2]] %&gt;% data.frame() %&gt;%
+  mutate_at(2:3, parse_number) %&gt;%
+  mutate(pct_dem = round(100*Clinton/(Trump+Clinton),1)) %&gt;% 
+  arrange(desc(pct_dem)) %&gt;% 
+  mutate(county = tolower(Vote.by.county)) %&gt;%
+  select(-Vote.by.county)
+
+kscountymap &lt;- map_data("county", region="kansas") %&gt;%
+  left_join(kscountyvote, by=c("subregion"="county") )
+
+ggplot(data=kscountymap,
+       aes(x = long, y = lat, group = subregion)) +
+  geom_polygon(aes(fill=pct_dem),
+               color = "black", size = 0.2) +
+  coord_fixed(1.3) +
+  labs(x = "Longitude", y = "Latitude") +
+  scale_fill_gradient2(low="red", high="blue")
+```
+
+![](presentationslides_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
+---
+![](presentationslides_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
+---
+# Converting JSON
+- Web data increasingly comes in JSON format for portability
+- Package `jsonlite` has useful functions for parsing this data
+- Sometimes requires a little bit of extra munging work to get everything looking nice
+---
+# Converting JSON
+- key functions are `fromJSON()` and `parse_json()` for reading, and `toJSON()` to go the other way
+- Ex using the NCEI weather data API:
+
+```r
+weather_data &lt;- httr::GET(
+  'https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json',
+  config=list(add_headers(token = "GqooDvukNWGfovrWXVZhSZtrgEnlakYy") ) )
+
+weather_data
+```
+
+```
+## Response [https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json]
+##   Date: 2020-01-04 22:08
+##   Status: 200
+##   Content-Type: application/json;charset=utf-8
+##   Size: 1.24 kB
+## [
+## {"DATE":"2016-01-01T00:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND...
+## ,{"DATE":"2016-01-01T21:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
+## ,{"DATE":"2016-01-02T00:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
+## ,{"DATE":"2016-01-02T03:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
+## ,{"DATE":"2016-01-02T06:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
+## ,{"DATE":"2016-01-02T09:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
+## ,{"DATE":"2016-01-02T12:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
+## ,{"DATE":"2016-01-02T15:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
+## ,{"DATE":"2016-01-02T18:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
+## ...
+```
+---
+
+```r
+weather_json &lt;- httr::content(weather_data, as='text') 
+weather_json %&gt;% fromJSON() %&gt;% head()
+```
+
+```
+##                  DATE STATION LONGITUDE WIND_DIR LATITUDE WIND_SPEED
+## 1 2016-01-01T00:09:00    AUCE     57.50       90   -20.20         40
+## 2 2016-01-01T21:09:00    AUCE     57.50       20   -20.20         20
+## 3 2016-01-02T00:09:00    AUCE     57.50      350   -20.20         20
+## 4 2016-01-02T03:09:00    AUCE     57.50      340   -20.20         20
+## 5 2016-01-02T06:09:00    AUCE     57.50      350   -20.20         30
+## 6 2016-01-02T09:09:00    AUCE     57.50      330   -20.20         30
+```
+
+---
+#Alternative (1 step from the API):
+
+```r
+#parse_json defaults everything to character, so use type_convert()
+weather_data %&gt;% 
+  parse_json(simplifyDataFrame=TRUE) %&gt;%
+  type_convert(col_types=cols()) %&gt;% 
+str()
+```
+
+```
+## 'data.frame':	10 obs. of  6 variables:
+##  $ DATE      : POSIXct, format: "2016-01-01 00:09:00" "2016-01-01 21:09:00" ...
+##  $ STATION   : chr  "AUCE" "AUCE" "AUCE" "AUCE" ...
+##  $ LONGITUDE : num  57.5 57.5 57.5 57.5 57.5 57.5 57.5 57.5 57.5 57.5
+##  $ WIND_DIR  : num  90 20 350 340 350 330 330 330 300 320
+##  $ LATITUDE  : num  -20.2 -20.2 -20.2 -20.2 -20.2 -20.2 -20.2 -20.2 -20.2 -20.2
+##  $ WIND_SPEED: num  40 20 20 20 30 30 40 10 30 20
+```
+---
+
+# Reading from databases
+- Often, data is too big to fit into memory and you'll need to do some work in the database before you can read it in
+- R has several packages for doing so: `dbplyr`, `RSQLite`, `DBI`, `RODBC`, to name a few
+- Ex: Connecting and reading from a local database:
+
+```r
+library(DBI)
+mydb &lt;- dbConnect(RSQLite::SQLite(), "ncaa2018-19.sqlite")
+
+dbGetQuery(mydb,
+"SELECT Name, MP, PTS, TRB, AST
+FROM homebox
+LEFT JOIN games on games.gameid=homebox.gameid
+WHERE games.gameid=201811061"
+)
+```
+
+```
+##               Name MP PTS TRB AST
+## 1    Dedric Lawson 38  20  14   6
+## 2     Devon Dotson 34  16   2   3
+## 3    Lagerald Vick 32   2   3   3
+## 4   Quentin Grimes 30  21   1   4
+## 5   Udoka Azubuike 20  17   3   1
+## 6   Marcus Garrett 14   4   1   2
+## 7    Charlie Moore 11   1   3   0
+## 8      K.J. Lawson 10   4   6   1
+## 9  Mitch Lightfoot  6   4   1   0
+## 10 David McCormack  5   3   3   1
+```
+---
+# Databases with dplyr
+- For some database types, dplyr verbs work and you can manipulate how you normally would without reading into memory
+- Then `collect()` the data at the end when you need it
+
+```r
+away_boxes &lt;- tbl(mydb,'awaybox')
+
+away_boxes %&gt;%
+  filter(team=='Iowa State') %&gt;%
+  select(gameid, team, Name, PTS) %&gt;% 
+  collect() %&gt;% 
+  head()
+```
+
+```
+## # A tibble: 6 x 4
+##   gameid      team       Name                  PTS
+##   &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;               &lt;dbl&gt;
+## 1 20181106858 Iowa State Nick Weiler-Babb       10
+## 2 20181106858 Iowa State Michael Jacobson       23
+## 3 20181106858 Iowa State Talen Horton-Tucker    26
+## 4 20181106858 Iowa State Marial Shayok          17
+## 5 20181106858 Iowa State Tyrese Haliburton       0
+## 6 20181106858 Iowa State Terrence Lewis          8
+```
+
+---
+
+class: center, middle
+
+
+![Image of Hallmark](https://upload.wikimedia.org/wikipedia/commons/3/37/Hallmark_logo.svg)
+
+# THANKS!
+
+.pull-left[
+![Image of Jayhawk](https://upload.wikimedia.org/wikipedia/en/f/f4/Kansas_Jayhawks_logo.svg)
+]
+.pull-right[
+![Image of Cyclone](https://cdn.wallpapersafari.com/56/16/t5Php0.jpg)
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

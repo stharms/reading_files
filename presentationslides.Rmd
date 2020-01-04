@@ -1,0 +1,445 @@
+---
+title: "Reading Files in R"
+author:
+  - "Steve Harms"
+date: 
+  - "1/11/2020"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+setwd("~/Documents/R/Rusergroup/reading_slides")#set working directory to wherever your file is located
+library(tidyverse, quietly = TRUE)
+library(writexl)
+library(jsonlite)
+library(RSQLite)
+library(DBI)
+library(data.table)
+library(rvest)
+library(httr)
+library(DBI)
+```
+
+---
+# Overview
+
+**Goal** : Import data into your R workspace in the form of a data.frame
+
+Some simple examples:
+
+- Reading common file types: .csv, Excel, text/delimited
+  
+  If time allows:
+  
+- html , JSON , and web APIs
+
+- Reading from databases
+---
+# Reading from common file types
+
+- base R supports reading text files, e.g. `read.table()`, `read.csv()`, `read.delim()` reads data from text files files with specified delimiters
+- Package `readr` also provides convenient similar functions with `read_*()` but is faster than base R
+
+- `fread()` from package `data.table` is faster than both of the above, but syntax is less intuitive 
+
+---
+# General process for reading files:
+- Locate file, note its size
+- Read in data
+- Name/Re-name columns
+- Check:
+  + Dimension to make sure all was read in correctly
+  + First and last few rows
+  + Structure of the dataframe to ensure data types are correct
+  + Numerical summaries
+
+---
+# Reading csv files
+- File '18collegebasketball.csv' contains all the scores from every Division 1 NCAA College Basketball game in 2018-19 season
+- This is clean data, so it's relatively easy to read with your method of choice (base R here):
+
+```{r, echo =T, message=F}
+cbb_games <- read.csv('18collegebasketball.csv',
+                      stringsAsFactors=TRUE)
+dim(cbb_games)
+str(cbb_games)
+```
+
+---
+
+# Specifying column types:
+- Note that gameid is specified to be a numeric variable
+- By default, `read_csv()` will guess data types based on the first 1000 rows in the file.
+- If you want to instead specify the column types, use the `col_types` argument:
+
+```{r, echo=TRUE, message=F}
+cbb_games <- read_csv('18collegebasketball.csv',
+                      col_types = list('gameid' = col_character()))
+cbb_games %>% head()
+```
+
+---
+# `type_convert()`
+
+- If data isn't clean, you may need to read it in and clean it before you  convert to the data type you want
+- The `type_convert()` function is like the `col_types` argument in `read_*` but is used after the data is read in
+- Process:
+  + Read in data as character vector
+  + Cleaning/munging manually to remove extra characters / NAs / Invalid entries
+  + `type_convert()` to convert to column types you want (or let it guess)
+- Ex) Want to split time into time + morning/night column, convert time to numeric:
+
+```{r, echo=T}
+read_csv('Ames_weather_2017_2018.csv', col_types='ccccccc')
+```
+
+---
+
+```{r,echo=T}
+#read in as character, clean up times, then let readr convert
+read_csv('Ames_weather_2017_2018.csv',
+         col_types='ccccccc') %>%
+  mutate(`AM/PM` = str_sub(time, start=-2L),
+         time = str_remove_all(time,':00 .M')) %>%
+  select(date,time, `AM/PM`, 3:7) %>%
+  type_convert(col_types=cols()) %>%
+  str()
+```
+
+---
+
+# Specifying column types (base R):
+- If you prefer base R, you can use the `colClasses` argument to specify them individually
+- `read.csv()` and `read.table()` will guess data types based on the first few lines
+- Default is to read character strings in as a factor data type. This can be changed by setting `stringsAsFactors=TRUE` (overwritten by `colClasses`)
+
+```{r, echo=TRUE}
+cbb_games <- read.csv('18collegebasketball.csv',
+                      colClasses=c('character', 'character', 'integer',
+                                   'character', 'integer','character')
+)
+
+str(cbb_games)
+```
+---
+# Setting column names and row names
+- Get and set the names of your variables with `colnames()` or `names()`
+
+```{r, echo=TRUE, message=F}
+colnames(cbb_games) <- c('gameid', 'home_team', 'home_score',
+                         'away_team', 'away_score', 'date')
+names(cbb_games)[1] <- c('game_id')
+
+head(cbb_games)
+```
+
+---
+
+# Reading from Excel files
+- Package `readxl` provides easy functions for reading MS Excel files
+- Note it will only read one sheet, defaulting to the first unless specified
+- `read_xlsx` has similar arguments to `read_csv`
+- Example: Here, there are some notes at the top:
+
+```{r, echo = T, include=FALSE, message=FALSE}
+ex <- readxl::read_xlsx('18collegebasketball.xlsx')
+```
+```{r, echo = T, results='hide', message=FALSE}
+ex <- readxl::read_xlsx('18collegebasketball.xlsx')
+```
+```{r, echo =T}
+head(ex)
+```
+
+---
+# Reading from Excel Example
+- You can skip the first few lines with the `skip` argument and only read in the data:
+
+```{r, echo =T, message=F}
+readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
+```
+
+
+---
+# Other common file types / situations
+
+- For general tab/comma/whitespace delimited files: 
+  + `read.table`/`read_table`, specify the delmiter with `sep` argument
+  + `read.delim`/`read_delim` and specify the delimiter with `delim` argument
+  
+- For fixed width files, `read.fwf`/`read_fwf` for fixed width files
+  + This format can often be read faster than less-structured data
+  
+- For unstructured text files, use `readLines` or `read_lines`
+
+- For extra large files, `read_csv_chunked` can read a file in chunks
+  + Useful when you want to aggregate or filter the data without reading into memory
+  
+---
+# Reading a csv in chunks
+
+```{r,echo=T}
+#filter the csv file to only KU's home games
+f<- function(x, pos) filter(x, home=='Kansas')
+
+#but do it in chunks of size 100
+KU <- read_csv_chunked('18collegebasketball.csv',
+                       callback = DataFrameCallback$new(f),
+                       chunk_size=100, col_types = cols())
+KU %>% summary()
+```
+---
+
+# URLs work too
+- Previous example was only for a file downloaded locally
+- If the file is located at a url instead, can pass the url directly to your `read_*`
+- Now, `read_csv()` downloads a temp file of ages of different members of Congress:
+
+```{r, echo=T}
+read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/congress-age/congress-terms.csv", col_types = cols())
+```
+---
+# Final Example
+- Reading data in is only the first step in many:
+```{r, echo=TRUE, results='hide'}
+read_csv('18collegebasketball.csv',
+         col_names=c('gameid', 'home_team', 'home_score',
+                     'away_team', 'away_score', 'date'),
+         col_types=cols(),
+         skip = 1) %>% 
+  filter(home_team == 'Kansas' | away_team == 'Kansas') %>%
+  mutate(
+    point_diff = if_else(home_team=='Kansas',
+                         home_score-away_score,
+                         away_score-home_score),
+    date=lubridate::mdy(date)
+  ) %>%
+  ggplot() +
+  geom_col(aes(x=date, y=point_diff, fill=(point_diff>0))) +
+  theme_bw() +
+  theme(legend.position= 'none') +
+  scale_x_date(date_breaks="2 weeks", date_labels = "%m/%d") +
+  scale_fill_brewer(palette='Set1') +
+  labs(y='KU Margin of Victory')
+```
+---
+```{r,echo=FALSE}
+read_csv('18collegebasketball.csv',
+         col_names=c('gameid', 'home_team', 'home_score',
+                     'away_team', 'away_score', 'date'),
+         col_types=cols(),
+         skip = 1) %>% 
+  filter(home_team == 'Kansas' | away_team == 'Kansas') %>%
+  mutate(
+    point_diff = if_else(home_team=='Kansas',
+                         home_score-away_score,
+                         away_score-home_score),
+    date=lubridate::mdy(date)
+  ) %>%
+  ggplot() +
+  geom_col(aes(x=date, y=point_diff, fill=(point_diff>0))) +
+  theme_bw() +
+  theme(legend.position= 'none') +
+  scale_x_date(date_breaks="2 weeks", date_labels = "%m/%d") +
+  scale_fill_brewer(palette='Set1') +
+  labs(y='KU Margin of Victory')
+```
+
+
+
+---
+
+# Writing files out
+- When you're done cleaning or analyzing your data, you can write the results out just like you got them in
+- If you are looking for a quick copy/paste, just use `print()` and set `row.names=FALSE`
+- Note: `write.csv()` writes row names by default, `write_csv()` does not
+- If you are processing data in chunks, it may also be useful to write the output into the same file by setting `append=TRUE`
+
+
+```{r,echo=TRUE}
+write.csv(KU, 'KUgames1819.csv')
+write_csv(KU, 'KUgames1819.csv', append = TRUE)
+```
+
+---
+# Writing Excel Files
+- The `writexl` package allows for writing data.frames to .xlsx files
+- If you pass a list of dataframes, it will write each dataframe to a separate sheet in the Excel file
+
+```{r,echo=T, results='hide'}
+library(writexl)
+
+KU <- cbb_games %>%
+  filter(home_team=='Kansas' | away_team=='Kansas')
+
+ISU <- cbb_games %>%
+  filter(home_team=='Iowa State' | away_team=='Iowa State')
+```
+```{r,echo=T}
+write_xlsx(x=list("KU"=KU,"IowaState"=ISU),
+           path='KUandISU19.xlsx')
+```
+
+---
+
+
+# data.table
+- If dealing with really large files (but still small enough to fit in RAM), data.table is as fast as it gets
+- Use `fread` and `fwrite`
+- Really only worth it to use this when files are large and speed becomes an issue
+
+```{r, echo = TRUE}
+#this is actually slower than read_csv() because the file is small
+data.table::fread('18collegebasketball.csv') %>% 
+  summary()
+```
+
+---
+# Other resources
+  - Learning R (Cotton) , chapter 12
+  - R Cookbook , chapter 5
+  - R for Data Science , chapter 11
+  
+---
+# Reading html/XML
+
+- Reading data from the web via API or web scraping is becoming increasingly important
+- For web scraping and reading XML or HTML files, R offers several good packages
+- My personal favorites are `rvest` and `XML2`
+---
+# Reading html/XML
+- Web scraping in R is another topic entirely, but a quick example of how easy it can be
+- `read_html()` will read the entire html file
+- `html_table()` will find all tables in the page and parse
+- NYTimes results from the 2016 Election by KS county:
+
+```{r,echo=TRUE}
+library(rvest)
+ksurl <- "http://www.nytimes.com/elections/results/kansas"
+kstables <- read_html(ksurl) %>% html_table(fill=T)
+
+head(kstables[[2]])
+```
+---
+- After a little work, you can turn it into a map...
+
+```{r, echo=TRUE, results='hide', message=FALSE}
+kscountyvote <- kstables[[2]] %>% data.frame() %>%
+  mutate_at(2:3, parse_number) %>%
+  mutate(pct_dem = round(100*Clinton/(Trump+Clinton),1)) %>% 
+  arrange(desc(pct_dem)) %>% 
+  mutate(county = tolower(Vote.by.county)) %>%
+  select(-Vote.by.county)
+
+kscountymap <- map_data("county", region="kansas") %>%
+  left_join(kscountyvote, by=c("subregion"="county") )
+
+ggplot(data=kscountymap,
+       aes(x = long, y = lat, group = subregion)) +
+  geom_polygon(aes(fill=pct_dem),
+               color = "black", size = 0.2) +
+  coord_fixed(1.3) +
+  labs(x = "Longitude", y = "Latitude") +
+  scale_fill_gradient2(low="red", high="blue")
+```
+---
+```{r, echo=FALSE, message=FALSE}
+kscountyvote <- kstables[[2]] %>% data.frame() %>%
+  mutate_at(2:3, parse_number) %>%
+  mutate(pct_dem = round(100*Clinton/(Trump+Clinton),1)) %>% 
+  arrange(desc(pct_dem))  %>%
+  mutate(county = tolower(Vote.by.county)) %>%
+  select(-Vote.by.county)
+
+kscountymap <- map_data("county", region="kansas") %>%
+  left_join(kscountyvote, by=c("subregion"="county") )
+
+ggplot(data=kscountymap, aes(x = long, y = lat, group = subregion)) +
+  geom_polygon(aes(fill=pct_dem), color = "black", size = 0.2) + coord_fixed(1.3) +
+  labs(x = "Longitude", y = "Latitude") + scale_fill_gradient2(low="red", high="blue")
+```
+---
+# Converting JSON
+- Web data increasingly comes in JSON format for portability
+- Package `jsonlite` has useful functions for parsing this data
+- Sometimes requires a little bit of extra munging work to get everything looking nice
+---
+# Converting JSON
+- key functions are `fromJSON()` and `parse_json()` for reading, and `toJSON()` to go the other way
+- Ex using the NCEI weather data API:
+```{r, echo=T}
+weather_data <- httr::GET(
+  'https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&dataTypes=WIND_DIR,WIND_SPEED&stations=AUCE&startDate=2016-01-01&endDate=2016-01-02&boundingBox=90,-180,-90,180&format=json',
+  config=list(add_headers(token = "GqooDvukNWGfovrWXVZhSZtrgEnlakYy") ) )
+
+weather_data
+```
+---
+```{r, echo=TRUE}
+weather_json <- httr::content(weather_data, as='text') 
+weather_json %>% fromJSON() %>% head()
+
+```
+
+---
+#Alternative (1 step from the API):
+```{r, echo=TRUE}
+#parse_json defaults everything to character, so use type_convert()
+weather_data %>% 
+  parse_json(simplifyDataFrame=TRUE) %>%
+  type_convert(col_types=cols()) %>% 
+str()
+```
+---
+
+# Reading from databases
+- Often, data is too big to fit into memory and you'll need to do some work in the database before you can read it in
+- R has several packages for doing so: `dbplyr`, `RSQLite`, `DBI`, `RODBC`, to name a few
+- Ex: Connecting and reading from a local database:
+```{r, echo=TRUE}
+library(DBI)
+mydb <- dbConnect(RSQLite::SQLite(), "ncaa2018-19.sqlite")
+
+dbGetQuery(mydb,
+"SELECT Name, MP, PTS, TRB, AST
+FROM homebox
+LEFT JOIN games on games.gameid=homebox.gameid
+WHERE games.gameid=201811061"
+)
+```
+---
+# Databases with dplyr
+- For some database types, dplyr verbs work and you can manipulate how you normally would without reading into memory
+- Then `collect()` the data at the end when you need it
+```{r,echo=TRUE}
+away_boxes <- tbl(mydb,'awaybox')
+
+away_boxes %>%
+  filter(team=='Iowa State') %>%
+  select(gameid, team, Name, PTS) %>% 
+  collect() %>% 
+  head()
+```
+
+---
+
+class: center, middle
+
+
+![Image of Hallmark](https://upload.wikimedia.org/wikipedia/commons/3/37/Hallmark_logo.svg)
+
+# THANKS!
+
+.pull-left[
+![Image of Jayhawk](https://upload.wikimedia.org/wikipedia/en/f/f4/Kansas_Jayhawks_logo.svg)
+]
+.pull-right[
+![Image of Cyclone](https://cdn.wallpapersafari.com/56/16/t5Php0.jpg)
+]
