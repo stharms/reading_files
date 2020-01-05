@@ -45,7 +45,6 @@ Some simple examples:
 library(tidyverse)
 ```
   
-
 - `fread()` from package `data.table` is faster than both of the above, but syntax is less intuitive 
 
 ---
@@ -55,7 +54,7 @@ library(tidyverse)
 - Name/Re-name columns
 - Check:
   + Dimension to make sure all was read in correctly
-  + First and last few rows
+  + First and/or last few rows
   + Structure of the dataframe to ensure data types are correct
   + Numerical summaries
 
@@ -284,11 +283,14 @@ readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
 # Other common file types / situations
 
 - For general tab/comma/whitespace delimited files: 
-  + `read.table`/`read_table`, specify the delmiter with `sep` argument
-  + `read.delim`/`read_delim` and specify the delimiter with `delim` argument
+  + `read.table`/`read_table` for tables separated by whitespace
+  + `read.delim`/`read_delim` and specify the delimiter with `delim` argument ('\t' for tabs, ' ' for space, etc.)
+
+
+
   
-- For fixed width files, `read.fwf`/`read_fwf` for fixed width files
-  + This format can often be read faster than less-structured data
+- For fixed width files, `read.fwf`/`read_fwf()`
+  + This format can be more compact often read faster than less-structured data
   
 - For unstructured text files, use `readLines` or `read_lines`
 
@@ -381,9 +383,9 @@ read_csv('18collegebasketball.csv',
   labs(y='KU Margin of Victory')
 ```
 
-![](presentationslides_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
----
 ![](presentationslides_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
+---
+![](presentationslides_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
 
 
 
@@ -516,9 +518,9 @@ ggplot(data=kscountymap,
   scale_fill_gradient2(low="red", high="blue")
 ```
 
-![](presentationslides_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
----
 ![](presentationslides_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
+---
+![](presentationslides_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
 ---
 # Converting JSON
 - Web data increasingly comes in JSON format for portability
@@ -539,7 +541,7 @@ weather_data
 
 ```
 ## Response [https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json]
-##   Date: 2020-01-04 22:26
+##   Date: 2020-01-05 20:19
 ##   Status: 200
 ##   Content-Type: application/json;charset=utf-8
 ##   Size: 1.24 kB

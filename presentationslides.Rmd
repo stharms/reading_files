@@ -51,7 +51,6 @@ Some simple examples:
 library(tidyverse)
 ```
   
-
 - `fread()` from package `data.table` is faster than both of the above, but syntax is less intuitive 
 
 ---
@@ -61,7 +60,7 @@ library(tidyverse)
 - Name/Re-name columns
 - Check:
   + Dimension to make sure all was read in correctly
-  + First and last few rows
+  + First and/or last few rows
   + Structure of the dataframe to ensure data types are correct
   + Numerical summaries
 
@@ -176,11 +175,16 @@ readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
 # Other common file types / situations
 
 - For general tab/comma/whitespace delimited files: 
-  + `read.table`/`read_table`, specify the delmiter with `sep` argument
-  + `read.delim`/`read_delim` and specify the delimiter with `delim` argument
+  + `read.table`/`read_table` for tables separated by whitespace
+  + `read.delim`/`read_delim` and specify the delimiter with `delim` argument ('\t' for tabs, ' ' for space, etc.)
+
+```{r,echo=TRUE, include=FALSE}
+read_delim('18collegebasketball.csv', delim=',', col_types=cols())
+```
+
   
-- For fixed width files, `read.fwf`/`read_fwf` for fixed width files
-  + This format can often be read faster than less-structured data
+- For fixed width files, `read.fwf`/`read_fwf()`
+  + This format can be more compact often read faster than less-structured data
   
 - For unstructured text files, use `readLines` or `read_lines`
 
