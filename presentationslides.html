@@ -435,26 +435,23 @@ write_xlsx(x=list("KU"=KU,"IowaState"=ISU),
 
 
 ```r
-#this is actually slower than read_csv() because the file is small
-data.table::fread('18collegebasketball.csv') %&gt;% 
-  summary()
+s &lt;- Sys.time()
+dt &lt;- data.table::fread('accident.txt', sep='|')
+Sys.time()-s
 ```
 
 ```
-##      gameid              home             homescore     
-##  Min.   :2.018e+08   Length:5909        Min.   : 24.00  
-##  1st Qu.:2.020e+11   Class :character   1st Qu.: 67.00  
-##  Median :2.020e+11   Mode  :character   Median : 75.00  
-##  Mean   :1.710e+11                      Mean   : 75.85  
-##  3rd Qu.:2.020e+11                      3rd Qu.: 84.00  
-##  Max.   :2.020e+11                      Max.   :148.00  
-##      away             awayscore          date          
-##  Length:5909        Min.   : 29.00   Length:5909       
-##  Class :character   1st Qu.: 60.00   Class :character  
-##  Mode  :character   Median : 68.00   Mode  :character  
-##                     Mean   : 68.52                     
-##                     3rd Qu.: 77.00                     
-##                     Max.   :118.00
+## Time difference of 0.02975798 secs
+```
+
+```r
+s &lt;- Sys.time()
+rdr &lt;- readr::read_delim('accident.txt', delim='|', col_types=cols())
+Sys.time()-s
+```
+
+```
+## Time difference of 0.1254499 secs
 ```
 
 ---
@@ -541,7 +538,7 @@ weather_data
 
 ```
 ## Response [https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json]
-##   Date: 2020-01-05 20:19
+##   Date: 2020-01-06 02:17
 ##   Status: 200
 ##   Content-Type: application/json;charset=utf-8
 ##   Size: 1.24 kB
@@ -661,6 +658,8 @@ class: center, middle
 ![Image of Hallmark](https://upload.wikimedia.org/wikipedia/commons/3/37/Hallmark_logo.svg)
 
 # THANKS!
+
+https://github.com/stharms/reading_files
 
 .pull-left[
 ![Image of Jayhawk](https://upload.wikimedia.org/wikipedia/en/f/f4/Kansas_Jayhawks_logo.svg)

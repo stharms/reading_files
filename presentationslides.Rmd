@@ -305,9 +305,13 @@ write_xlsx(x=list("KU"=KU,"IowaState"=ISU),
 - Really only worth it to use this when files are large and speed becomes an issue
 
 ```{r, echo = TRUE}
-#this is actually slower than read_csv() because the file is small
-data.table::fread('18collegebasketball.csv') %>% 
-  summary()
+s <- Sys.time()
+dt <- data.table::fread('accident.txt', sep='|')
+Sys.time()-s
+
+s <- Sys.time()
+rdr <- readr::read_delim('accident.txt', delim='|', col_types=cols())
+Sys.time()-s
 ```
 
 ---
@@ -445,6 +449,8 @@ class: center, middle
 ![Image of Hallmark](https://upload.wikimedia.org/wikipedia/commons/3/37/Hallmark_logo.svg)
 
 # THANKS!
+
+https://github.com/stharms/reading_files
 
 .pull-left[
 ![Image of Jayhawk](https://upload.wikimedia.org/wikipedia/en/f/f4/Kansas_Jayhawks_logo.svg)
