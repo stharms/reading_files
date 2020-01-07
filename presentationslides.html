@@ -35,7 +35,7 @@ Some simple examples:
 
 - Reading from databases
 ---
-# Reading from common file types
+# Reading from common text file types
 
 - base R supports reading text files, e.g. `read.table()`, `read.csv()`, `read.delim()` reads data from text files files with specified delimiters
 - Package `readr` also provides convenient similar functions with `read_*()` but is faster than base R
@@ -46,6 +46,13 @@ library(tidyverse)
 ```
   
 - `fread()` from package `data.table` is faster than both of the above, but syntax is less intuitive 
+
+---
+# How parsers work
+
+  - text file is parsed into a rectangular matrix of strings
+  - column types are determined or specified
+  - each column of strings is parsed into a vector of a more specific type
 
 ---
 # General process for reading files:
@@ -223,61 +230,16 @@ head(cbb_games)
 ```
 
 ---
+# Other useful readr functionality
 
-# Reading from Excel files
-- Package `readxl` provides easy functions for reading MS Excel files
-- Note it will only read one sheet, defaulting to the first unless specified
-- `read_xlsx` has similar arguments to `read_csv`
-- Example: Here, there are some notes at the top:
-
-
-
-```r
-ex &lt;- readxl::read_xlsx('18collegebasketball.xlsx')
-```
-
-```r
-head(ex)
-```
-
-```
-## # A tibble: 6 x 6
-##   `This is a list of college basketba~ ..2     ..3    ..4      ..5    ..6  
-##   &lt;chr&gt;                                &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;
-## 1 I removed a few of the  values as w~ &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;     &lt;NA&gt;   &lt;NA&gt; 
-## 2 gameid                               home    homes~ away     aways~ date 
-## 3 201811061                            Kansas  92     Michiga~ 87     43410
-## 4 201811062                            Kentuc~ 84     Duke     118    43410
-## 5 201811063                            Gonzaga 120    Idaho S~ 79     43410
-## 6 201811064                            Virgin~ 73     Towson   42     43410
-```
-
----
-# Reading from Excel Example
-- You can skip the first few lines with the `skip` argument and only read in the data:
-
-
-```r
-readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
-```
-
-```
-## # A tibble: 5,909 x 6
-##        gameid home     homescore away         awayscore date               
-##         &lt;dbl&gt; &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;            &lt;dbl&gt; &lt;dttm&gt;             
-##  1  201811061 Kansas          92 Michigan St~        87 2018-11-06 00:00:00
-##  2  201811062 Kentucky        84 Duke               118 2018-11-06 00:00:00
-##  3  201811063 Gonzaga        120 Idaho State         79 2018-11-06 00:00:00
-##  4  201811064 Virginia        73 Towson              42 2018-11-06 00:00:00
-##  5  201811065 Tenness~        86 Lenoir-Rhyne        41 2018-11-06 00:00:00
-##  6  201811066 Nevada          86 Brigham You~        70 2018-11-06 00:00:00
-##  7  201811067 Wofford         67 North Carol~        78 2018-11-06 00:00:00
-##  8  201811068 Villano~       100 Morgan State        77 2018-11-06 00:00:00
-##  9  201811069 Auburn         101 South Alaba~        58 2018-11-06 00:00:00
-## 10 2018110610 Oregon          84 Portland St~        57 2018-11-06 00:00:00
-## # ... with 5,899 more rows
-```
-
+- After cleaning up data or if you create a new variable, may need to parse the column into they type you want
+  + Use `parse_*` to convert individual columns to the type you want (e.g., `parse_datetime`, `parse_double`, `parse_factor`)
+Typical process: 
+  + Read in text as character strings
+  + clean up NAs/regex/invalid data 
+  + parse to desired format with `parse_*` for one vector or `type_convert()` for a data frame
+- If there are problems parsing the data you read in, view them with `problems()`
+- Want to save the column types from a dataframe and apply it to the next file you read in? Use `spec()`
 
 ---
 # Other common file types / situations
@@ -296,7 +258,7 @@ readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
 
 - For extra large files, `read_csv_chunked` can read a file in chunks
   + Useful when you want to aggregate or filter the data without reading into memory
-  
+
 ---
 # Reading a csv in chunks
 
@@ -361,6 +323,7 @@ read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/congress
 # Final Example
 - Reading data in is only the first step in many:
 
+
 ```r
 read_csv('18collegebasketball.csv',
          col_names=c('gameid', 'home_team', 'home_score',
@@ -383,10 +346,67 @@ read_csv('18collegebasketball.csv',
   labs(y='KU Margin of Victory')
 ```
 
-![](presentationslides_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
----
-![](presentationslides_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
+![](presentationslides_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
 
+---
+
+![](presentationslides_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
+
+---
+
+# Reading from Excel files
+- Package `readxl` provides easy functions for reading MS Excel files
+- Note it will only read one sheet, defaulting to the first unless specified
+- `read_xlsx` has similar arguments to `read_csv`
+- Example: Here, there are some notes at the top:
+
+
+
+```r
+ex &lt;- readxl::read_xlsx('18collegebasketball.xlsx')
+```
+
+```r
+head(ex)
+```
+
+```
+## # A tibble: 6 x 6
+##   `This is a list of college basketba~ ..2     ..3    ..4      ..5    ..6  
+##   &lt;chr&gt;                                &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;
+## 1 I removed a few of the  values as w~ &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;     &lt;NA&gt;   &lt;NA&gt; 
+## 2 gameid                               home    homes~ away     aways~ date 
+## 3 201811061                            Kansas  92     Michiga~ 87     43410
+## 4 201811062                            Kentuc~ 84     Duke     118    43410
+## 5 201811063                            Gonzaga 120    Idaho S~ 79     43410
+## 6 201811064                            Virgin~ 73     Towson   42     43410
+```
+
+---
+# Reading from Excel Example
+- You can skip the first few lines with the `skip` argument and only read in the data:
+
+
+```r
+readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
+```
+
+```
+## # A tibble: 5,909 x 6
+##        gameid home     homescore away         awayscore date               
+##         &lt;dbl&gt; &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;            &lt;dbl&gt; &lt;dttm&gt;             
+##  1  201811061 Kansas          92 Michigan St~        87 2018-11-06 00:00:00
+##  2  201811062 Kentucky        84 Duke               118 2018-11-06 00:00:00
+##  3  201811063 Gonzaga        120 Idaho State         79 2018-11-06 00:00:00
+##  4  201811064 Virginia        73 Towson              42 2018-11-06 00:00:00
+##  5  201811065 Tenness~        86 Lenoir-Rhyne        41 2018-11-06 00:00:00
+##  6  201811066 Nevada          86 Brigham You~        70 2018-11-06 00:00:00
+##  7  201811067 Wofford         67 North Carol~        78 2018-11-06 00:00:00
+##  8  201811068 Villano~       100 Morgan State        77 2018-11-06 00:00:00
+##  9  201811069 Auburn         101 South Alaba~        58 2018-11-06 00:00:00
+## 10 2018110610 Oregon          84 Portland St~        57 2018-11-06 00:00:00
+## # ... with 5,899 more rows
+```
 
 
 ---
@@ -432,17 +452,8 @@ write_xlsx(x=list("KU"=KU,"IowaState"=ISU),
 - If dealing with really large files (but still small enough to fit in RAM), data.table is as fast as it gets
 - Use `fread` and `fwrite`
 - Really only worth it to use this when files are large and speed becomes an issue
+ + `data.table` structure and parsing (esp. for factors and date/time), not as convenient for analysis and manipulation
 
-
-```r
-s &lt;- Sys.time()
-dt &lt;- data.table::fread('accident.txt', sep='|')
-Sys.time()-s
-```
-
-```
-## Time difference of 0.02975798 secs
-```
 
 ```r
 s &lt;- Sys.time()
@@ -451,7 +462,17 @@ Sys.time()-s
 ```
 
 ```
-## Time difference of 0.1254499 secs
+## Time difference of 0.1186612 secs
+```
+
+```r
+s &lt;- Sys.time()
+dt &lt;- data.table::fread('accident.txt', sep='|')
+Sys.time()-s
+```
+
+```
+## Time difference of 0.02103996 secs
 ```
 
 ---
@@ -538,7 +559,7 @@ weather_data
 
 ```
 ## Response [https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json]
-##   Date: 2020-01-06 02:17
+##   Date: 2020-01-07 02:52
 ##   Status: 200
 ##   Content-Type: application/json;charset=utf-8
 ##   Size: 1.24 kB

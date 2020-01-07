@@ -42,7 +42,7 @@ Some simple examples:
 
 - Reading from databases
 ---
-# Reading from common file types
+# Reading from common text file types
 
 - base R supports reading text files, e.g. `read.table()`, `read.csv()`, `read.delim()` reads data from text files files with specified delimiters
 - Package `readr` also provides convenient similar functions with `read_*()` but is faster than base R
@@ -52,6 +52,13 @@ library(tidyverse)
 ```
   
 - `fread()` from package `data.table` is faster than both of the above, but syntax is less intuitive 
+
+---
+# How parsers work
+
+  - text file is parsed into a rectangular matrix of strings
+  - column types are determined or specified
+  - each column of strings is parsed into a vector of a more specific type
 
 ---
 # General process for reading files:
@@ -145,31 +152,16 @@ head(cbb_games)
 ```
 
 ---
+# Other useful readr functionality
 
-# Reading from Excel files
-- Package `readxl` provides easy functions for reading MS Excel files
-- Note it will only read one sheet, defaulting to the first unless specified
-- `read_xlsx` has similar arguments to `read_csv`
-- Example: Here, there are some notes at the top:
-
-```{r, echo = T, include=FALSE, message=FALSE}
-ex <- readxl::read_xlsx('18collegebasketball.xlsx')
-```
-```{r, echo = T, results='hide', message=FALSE}
-ex <- readxl::read_xlsx('18collegebasketball.xlsx')
-```
-```{r, echo =T}
-head(ex)
-```
-
----
-# Reading from Excel Example
-- You can skip the first few lines with the `skip` argument and only read in the data:
-
-```{r, echo =T, message=F}
-readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
-```
-
+- After cleaning up data or if you create a new variable, may need to parse the column into they type you want
+  + Use `parse_*` to convert individual columns to the type you want (e.g., `parse_datetime`, `parse_double`, `parse_factor`)
+Typical process: 
+  + Read in text as character strings
+  + clean up NAs/regex/invalid data 
+  + parse to desired format with `parse_*` for one vector or `type_convert()` for a data frame
+- If there are problems parsing the data you read in, view them with `problems()`
+- Want to save the column types from a dataframe and apply it to the next file you read in? Use `spec()`
 
 ---
 # Other common file types / situations
@@ -190,7 +182,7 @@ read_delim('18collegebasketball.csv', delim=',', col_types=cols())
 
 - For extra large files, `read_csv_chunked` can read a file in chunks
   + Useful when you want to aggregate or filter the data without reading into memory
-  
+
 ---
 # Reading a csv in chunks
 
@@ -217,6 +209,7 @@ read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/congress
 ---
 # Final Example
 - Reading data in is only the first step in many:
+
 ```{r, echo=TRUE, results='hide'}
 read_csv('18collegebasketball.csv',
          col_names=c('gameid', 'home_team', 'home_score',
@@ -238,7 +231,9 @@ read_csv('18collegebasketball.csv',
   scale_fill_brewer(palette='Set1') +
   labs(y='KU Margin of Victory')
 ```
+
 ---
+
 ```{r,echo=FALSE}
 read_csv('18collegebasketball.csv',
          col_names=c('gameid', 'home_team', 'home_score',
@@ -261,6 +256,31 @@ read_csv('18collegebasketball.csv',
   labs(y='KU Margin of Victory')
 ```
 
+---
+
+# Reading from Excel files
+- Package `readxl` provides easy functions for reading MS Excel files
+- Note it will only read one sheet, defaulting to the first unless specified
+- `read_xlsx` has similar arguments to `read_csv`
+- Example: Here, there are some notes at the top:
+
+```{r, echo = T, include=FALSE, message=FALSE}
+ex <- readxl::read_xlsx('18collegebasketball.xlsx')
+```
+```{r, echo = T, results='hide', message=FALSE}
+ex <- readxl::read_xlsx('18collegebasketball.xlsx')
+```
+```{r, echo =T}
+head(ex)
+```
+
+---
+# Reading from Excel Example
+- You can skip the first few lines with the `skip` argument and only read in the data:
+
+```{r, echo =T, message=F}
+readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
+```
 
 
 ---
@@ -303,14 +323,15 @@ write_xlsx(x=list("KU"=KU,"IowaState"=ISU),
 - If dealing with really large files (but still small enough to fit in RAM), data.table is as fast as it gets
 - Use `fread` and `fwrite`
 - Really only worth it to use this when files are large and speed becomes an issue
+ + `data.table` structure and parsing (esp. for factors and date/time), not as convenient for analysis and manipulation
 
 ```{r, echo = TRUE}
 s <- Sys.time()
-dt <- data.table::fread('accident.txt', sep='|')
+rdr <- readr::read_delim('accident.txt', delim='|', col_types=cols())
 Sys.time()-s
 
 s <- Sys.time()
-rdr <- readr::read_delim('accident.txt', delim='|', col_types=cols())
+dt <- data.table::fread('accident.txt', sep='|')
 Sys.time()-s
 ```
 
