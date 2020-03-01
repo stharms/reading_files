@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<html lang="" xml:lang="">
   <head>
     <title>Reading Files in R</title>
     <meta charset="utf-8" />
@@ -13,7 +13,7 @@ class: center, middle, inverse, title-slide
 
 # Reading Files in R
 ### Steve Harms
-### 1/11/2020
+### 3/14/2020
 
 ---
 
@@ -29,7 +29,7 @@ Some simple examples:
 
 - Reading common file types: .csv, Excel, text/delimited
   
-  If time allows:
+  If time allows, quick examples:
   
 - html , JSON , and web APIs
 
@@ -124,12 +124,13 @@ cbb_games %&gt;% head()
 ---
 # `type_convert()`
 
-- If data isn't clean, you may need to read it in and clean it before you  convert to the data type you want
-- The `type_convert()` function is like the `col_types` argument in `read_*` but is used after the data is read in
+- If data isn't clean, may need to read it in and clean it before converting to the data type you want
+- The `type_convert()` function is like the `col_types` argument in `read_*` but is used after the file is read into environment
 - Process:
   + Read in data as character vector
-  + Cleaning/munging manually to remove extra characters / NAs / Invalid entries
+  + Cleaning/munging manually to remove extra characters / NAs / etc.
   + `type_convert()` to convert to column types you want (or let it guess)
+  
 - Ex) Want to split time into time + morning/night column, convert time to numeric:
 
 
@@ -169,7 +170,7 @@ read_csv('Ames_weather_2017_2018.csv',
 ```
 
 ```
-## Classes 'tbl_df', 'tbl' and 'data.frame':	2976 obs. of  8 variables:
+## Classes 'spec_tbl_df', 'tbl_df', 'tbl' and 'data.frame':	2976 obs. of  8 variables:
 ##  $ date     : chr  "1/1/2017" "1/1/2017" "1/1/2017" "1/1/2017" ...
 ##  $ time     : num  12 6 12 6 12 6 12 6 12 6 ...
 ##  $ AM/PM    : chr  "AM" "AM" "PM" "PM" ...
@@ -234,11 +235,14 @@ head(cbb_games)
 
 - After cleaning up data or if you create a new variable, may need to parse the column into they type you want
   + Use `parse_*` to convert individual columns to the type you want (e.g., `parse_datetime`, `parse_double`, `parse_factor`)
+  
 Typical process: 
   + Read in text as character strings
   + clean up NAs/regex/invalid data 
   + parse to desired format with `parse_*` for one vector or `type_convert()` for a data frame
+  
 - If there are problems parsing the data you read in, view them with `problems()`
+
 - Want to save the column types from a dataframe and apply it to the next file you read in? Use `spec()`
 
 ---
@@ -254,13 +258,14 @@ Typical process:
 - For fixed width files, `read.fwf`/`read_fwf()`
   + This format can be more compact often read faster than less-structured data
   
-- For unstructured text files, use `readLines` or `read_lines`
+- For unstructured text files, use `readLines()` or `read_lines()`
+  + Useful if you know you don't have tabular data, but leaves a lot of manual work to do
 
 - For extra large files, `read_csv_chunked` can read a file in chunks
-  + Useful when you want to aggregate or filter the data without reading into memory
+  + Useful when you want to aggregate or filter a dataset without reading into memory
 
 ---
-# Reading a csv in chunks
+# Reading a .csv in chunks
 
 
 ```r
@@ -304,20 +309,20 @@ read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/congress
 
 ```
 ## # A tibble: 18,635 x 13
-##    congress chamber bioguide firstname middlename lastname suffix
-##       &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;    &lt;chr&gt; 
-##  1       80 house   M000112  Joseph    Jefferson  Mansfie~ &lt;NA&gt;  
-##  2       80 house   D000448  Robert    Lee        Doughton &lt;NA&gt;  
-##  3       80 house   S000001  Adolph    Joachim    Sabath   &lt;NA&gt;  
-##  4       80 house   E000023  Charles   Aubrey     Eaton    &lt;NA&gt;  
-##  5       80 house   L000296  William   &lt;NA&gt;       Lewis    &lt;NA&gt;  
-##  6       80 house   G000017  James     A.         Gallagh~ &lt;NA&gt;  
-##  7       80 house   W000265  Richard   Joseph     Welch    &lt;NA&gt;  
-##  8       80 house   B000565  Sol       &lt;NA&gt;       Bloom    &lt;NA&gt;  
-##  9       80 house   H000943  Merlin    &lt;NA&gt;       Hull     &lt;NA&gt;  
-## 10       80 house   G000169  Charles   Laceille   Gifford  &lt;NA&gt;  
-## # ... with 18,625 more rows, and 6 more variables: birthday &lt;date&gt;,
-## #   state &lt;chr&gt;, party &lt;chr&gt;, incumbent &lt;chr&gt;, termstart &lt;date&gt;, age &lt;dbl&gt;
+##    congress chamber bioguide firstname middlename lastname suffix birthday  
+##       &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;    &lt;chr&gt;  &lt;date&gt;    
+##  1       80 house   M000112  Joseph    Jefferson  Mansfie~ &lt;NA&gt;   1861-02-09
+##  2       80 house   D000448  Robert    Lee        Doughton &lt;NA&gt;   1863-11-07
+##  3       80 house   S000001  Adolph    Joachim    Sabath   &lt;NA&gt;   1866-04-04
+##  4       80 house   E000023  Charles   Aubrey     Eaton    &lt;NA&gt;   1868-03-29
+##  5       80 house   L000296  William   &lt;NA&gt;       Lewis    &lt;NA&gt;   1868-09-22
+##  6       80 house   G000017  James     A.         Gallagh~ &lt;NA&gt;   1869-01-16
+##  7       80 house   W000265  Richard   Joseph     Welch    &lt;NA&gt;   1869-02-13
+##  8       80 house   B000565  Sol       &lt;NA&gt;       Bloom    &lt;NA&gt;   1870-03-09
+##  9       80 house   H000943  Merlin    &lt;NA&gt;       Hull     &lt;NA&gt;   1870-12-18
+## 10       80 house   G000169  Charles   Laceille   Gifford  &lt;NA&gt;   1871-03-15
+## # ... with 18,625 more rows, and 5 more variables: state &lt;chr&gt;, party &lt;chr&gt;,
+## #   incumbent &lt;chr&gt;, termstart &lt;date&gt;, age &lt;dbl&gt;
 ```
 ---
 # Final Example
@@ -372,14 +377,14 @@ head(ex)
 
 ```
 ## # A tibble: 6 x 6
-##   `This is a list of college basketba~ ..2     ..3    ..4      ..5    ..6  
-##   &lt;chr&gt;                                &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;
-## 1 I removed a few of the  values as w~ &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;     &lt;NA&gt;   &lt;NA&gt; 
-## 2 gameid                               home    homes~ away     aways~ date 
-## 3 201811061                            Kansas  92     Michiga~ 87     43410
-## 4 201811062                            Kentuc~ 84     Duke     118    43410
-## 5 201811063                            Gonzaga 120    Idaho S~ 79     43410
-## 6 201811064                            Virgin~ 73     Towson   42     43410
+##   `This is a list of college basketball ga~ ...2    ...3   ...4     ...5   ...6 
+##   &lt;chr&gt;                                     &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;
+## 1 I removed a few of the  values as well    &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;     &lt;NA&gt;   &lt;NA&gt; 
+## 2 gameid                                    home    homes~ away     aways~ date 
+## 3 201811061                                 Kansas  92     Michiga~ 87     43410
+## 4 201811062                                 Kentuc~ 84     Duke     118    43410
+## 5 201811063                                 Gonzaga 120    Idaho S~ 79     43410
+## 6 201811064                                 Virgin~ 73     Towson   42     43410
 ```
 
 ---
@@ -393,18 +398,18 @@ readxl::read_xlsx('18collegebasketball.xlsx', skip = 2)
 
 ```
 ## # A tibble: 5,909 x 6
-##        gameid home     homescore away         awayscore date               
-##         &lt;dbl&gt; &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;            &lt;dbl&gt; &lt;dttm&gt;             
-##  1  201811061 Kansas          92 Michigan St~        87 2018-11-06 00:00:00
-##  2  201811062 Kentucky        84 Duke               118 2018-11-06 00:00:00
-##  3  201811063 Gonzaga        120 Idaho State         79 2018-11-06 00:00:00
-##  4  201811064 Virginia        73 Towson              42 2018-11-06 00:00:00
-##  5  201811065 Tenness~        86 Lenoir-Rhyne        41 2018-11-06 00:00:00
-##  6  201811066 Nevada          86 Brigham You~        70 2018-11-06 00:00:00
-##  7  201811067 Wofford         67 North Carol~        78 2018-11-06 00:00:00
-##  8  201811068 Villano~       100 Morgan State        77 2018-11-06 00:00:00
-##  9  201811069 Auburn         101 South Alaba~        58 2018-11-06 00:00:00
-## 10 2018110610 Oregon          84 Portland St~        57 2018-11-06 00:00:00
+##        gameid home      homescore away           awayscore date               
+##         &lt;dbl&gt; &lt;chr&gt;         &lt;dbl&gt; &lt;chr&gt;              &lt;dbl&gt; &lt;dttm&gt;             
+##  1  201811061 Kansas           92 Michigan State        87 2018-11-06 00:00:00
+##  2  201811062 Kentucky         84 Duke                 118 2018-11-06 00:00:00
+##  3  201811063 Gonzaga         120 Idaho State           79 2018-11-06 00:00:00
+##  4  201811064 Virginia         73 Towson                42 2018-11-06 00:00:00
+##  5  201811065 Tennessee        86 Lenoir-Rhyne          41 2018-11-06 00:00:00
+##  6  201811066 Nevada           86 Brigham Young         70 2018-11-06 00:00:00
+##  7  201811067 Wofford          67 North Carolina        78 2018-11-06 00:00:00
+##  8  201811068 Villanova       100 Morgan State          77 2018-11-06 00:00:00
+##  9  201811069 Auburn          101 South Alabama         58 2018-11-06 00:00:00
+## 10 2018110610 Oregon           84 Portland State        57 2018-11-06 00:00:00
 ## # ... with 5,899 more rows
 ```
 
@@ -462,7 +467,7 @@ Sys.time()-s
 ```
 
 ```
-## Time difference of 0.1186612 secs
+## Time difference of 0.1476059 secs
 ```
 
 ```r
@@ -472,7 +477,7 @@ Sys.time()-s
 ```
 
 ```
-## Time difference of 0.02103996 secs
+## Time difference of 0.03291106 secs
 ```
 
 ---
@@ -559,20 +564,20 @@ weather_data
 
 ```
 ## Response [https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json]
-##   Date: 2020-01-07 02:52
+##   Date: 2020-03-01 19:28
 ##   Status: 200
 ##   Content-Type: application/json;charset=utf-8
 ##   Size: 1.24 kB
 ## [
-## {"DATE":"2016-01-01T00:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND...
-## ,{"DATE":"2016-01-01T21:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
-## ,{"DATE":"2016-01-02T00:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
-## ,{"DATE":"2016-01-02T03:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
-## ,{"DATE":"2016-01-02T06:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
-## ,{"DATE":"2016-01-02T09:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
-## ,{"DATE":"2016-01-02T12:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
-## ,{"DATE":"2016-01-02T15:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
-## ,{"DATE":"2016-01-02T18:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIN...
+## {"DATE":"2016-01-01T00:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND_DIR"...
+## ,{"DATE":"2016-01-01T21:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND_DIR...
+## ,{"DATE":"2016-01-02T00:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND_DIR...
+## ,{"DATE":"2016-01-02T03:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND_DIR...
+## ,{"DATE":"2016-01-02T06:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND_DIR...
+## ,{"DATE":"2016-01-02T09:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND_DIR...
+## ,{"DATE":"2016-01-02T12:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND_DIR...
+## ,{"DATE":"2016-01-02T15:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND_DIR...
+## ,{"DATE":"2016-01-02T18:09:00","STATION":"AUCE","LONGITUDE":"57.50","WIND_DIR...
 ## ...
 ```
 ---
@@ -734,7 +739,24 @@ if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
     }
     deleted = true;
   });
-})();</script>
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
 
 <script>
 (function() {

@@ -3,7 +3,7 @@ title: "Reading Files in R"
 author:
   - "Steve Harms"
 date: 
-  - "1/11/2020"
+  - "3/14/2020" 
 output:
   xaringan::moon_reader:
     lib_dir: libs
@@ -36,7 +36,7 @@ Some simple examples:
 
 - Reading common file types: .csv, Excel, text/delimited
   
-  If time allows:
+  If time allows, quick examples:
   
 - html , JSON , and web APIs
 
@@ -99,12 +99,13 @@ cbb_games %>% head()
 ---
 # `type_convert()`
 
-- If data isn't clean, you may need to read it in and clean it before you  convert to the data type you want
-- The `type_convert()` function is like the `col_types` argument in `read_*` but is used after the data is read in
+- If data isn't clean, may need to read it in and clean it before converting to the data type you want
+- The `type_convert()` function is like the `col_types` argument in `read_*` but is used after the file is read into environment
 - Process:
   + Read in data as character vector
-  + Cleaning/munging manually to remove extra characters / NAs / Invalid entries
+  + Cleaning/munging manually to remove extra characters / NAs / etc.
   + `type_convert()` to convert to column types you want (or let it guess)
+  
 - Ex) Want to split time into time + morning/night column, convert time to numeric:
 
 ```{r, echo=T}
@@ -156,11 +157,14 @@ head(cbb_games)
 
 - After cleaning up data or if you create a new variable, may need to parse the column into they type you want
   + Use `parse_*` to convert individual columns to the type you want (e.g., `parse_datetime`, `parse_double`, `parse_factor`)
+  
 Typical process: 
   + Read in text as character strings
   + clean up NAs/regex/invalid data 
   + parse to desired format with `parse_*` for one vector or `type_convert()` for a data frame
+  
 - If there are problems parsing the data you read in, view them with `problems()`
+
 - Want to save the column types from a dataframe and apply it to the next file you read in? Use `spec()`
 
 ---
@@ -178,13 +182,14 @@ read_delim('18collegebasketball.csv', delim=',', col_types=cols())
 - For fixed width files, `read.fwf`/`read_fwf()`
   + This format can be more compact often read faster than less-structured data
   
-- For unstructured text files, use `readLines` or `read_lines`
+- For unstructured text files, use `readLines()` or `read_lines()`
+  + Useful if you know you don't have tabular data, but leaves a lot of manual work to do
 
 - For extra large files, `read_csv_chunked` can read a file in chunks
-  + Useful when you want to aggregate or filter the data without reading into memory
+  + Useful when you want to aggregate or filter a dataset without reading into memory
 
 ---
-# Reading a csv in chunks
+# Reading a .csv in chunks
 
 ```{r,echo=T}
 #filter the csv file to only KU's home games
