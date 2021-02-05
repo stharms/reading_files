@@ -13,7 +13,7 @@ class: center, middle, inverse, title-slide
 
 # Reading Files in R
 ### Steve Harms
-### 3/14/2020
+### 2/13/2021
 
 ---
 
@@ -28,6 +28,9 @@ class: center, middle, inverse, title-slide
 Some simple examples:
 
 - Reading common file types: .csv, Excel, text/delimited
+  +  How is R parsing the text?
+  +  Troubleshooting common errors
+  +  Focus on tabular data
   
   If time allows, quick examples:
   
@@ -39,8 +42,8 @@ Some simple examples:
 
 - base R supports reading text files, e.g. `read.table()`, `read.csv()`, `read.delim()` reads data from text files files with specified delimiters (commas, tabs, spaces, etc.)
 
-- Package `readr` also provides convenient similar functions with `read_*()` but is faster than base R
-  + It's part of the tidyverse
+- Package `readr` also provides convenient similar functions with `read_*()` but is typically faster than base R
+  + It's part of the tidyverse collection of packages
 
 ```r
 library(tidyverse)
@@ -328,7 +331,7 @@ summary(KU)
 
 # URLs work too
 - Previous example was only for a file downloaded locally
-- If the file is located at a url instead, can pass the url directly to your `read_*`
+- If the file is located at a URL instead, can pass the URL directly to your `read_*`
 - Now, `read_csv()` downloads a temp file of ages of different members of Congress:
 
 
@@ -498,7 +501,7 @@ Sys.time()-s
 ```
 
 ```
-## Time difference of 0.1984651 secs
+## Time difference of 0.1809411 secs
 ```
 
 ```r
@@ -508,7 +511,7 @@ Sys.time()-s
 ```
 
 ```
-## Time difference of 0.04288316 secs
+## Time difference of 0.01690793 secs
 ```
 
 ---
@@ -598,7 +601,7 @@ weather_data
 
 ```
 ## Response [https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json]
-##   Date: 2021-01-09 20:06
+##   Date: 2021-02-05 19:40
 ##   Status: 200
 ##   Content-Type: application/json;charset=utf-8
 ##   Size: 1.24 kB
