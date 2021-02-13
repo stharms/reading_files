@@ -28,7 +28,7 @@ library(httr)
 library(maps)
 ```
 
----
+
 # Overview
 
 **Goal** : Import data into your R workspace in the form of a data.frame
@@ -48,7 +48,7 @@ Some simple examples:
 ---
 # Reading from common text file types
 
-- base R supports reading text files, e.g. `read.table()`, `read.csv()`, `read.delim()` reads data from text files files with specified delimiters (commas, tabs, spaces, etc.)
+- base R supports reading text files, e.g. **`read.table()`**, **`read.csv()`**, **`read.delim()`** reads data from text files files with specified delimiters (commas, tabs, spaces, etc.)
 
 - Package **`readr`** also provides convenient similar functions with **`read_*()`** but is typically faster than base R
   + Part of the tidyverse collection of packages
@@ -64,11 +64,7 @@ library(readr) # if you just want readr but nothing else
 # How parsers work
 
   1. text file is parsed into a rectangular matrix of strings
-  
-  
   2. column types are determined (or specified by user)
-  
-  
   3. each column of strings is parsed into a vector of a more specific type
 
 ---
@@ -237,60 +233,6 @@ summary(KU)
 read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/congress-age/congress-terms.csv", col_types = cols())
 ```
 ---
-# Final Example
-- Reading data in is only the first step in many:
-
-```{r, echo=TRUE, results='hide'}
-read_csv('sample_data/18collegebasketball.csv',
-         col_names=c('gameid', 'home_team', 'home_score',
-                     'away_team', 'away_score', 'date'),
-         col_types=cols(),
-         skip = 1) %>% 
-  filter(home_team == 'Kansas' | away_team == 'Kansas') %>%
-  mutate(
-    point_diff = if_else(
-      home_team == 'Kansas',
-      home_score - away_score,
-      away_score - home_score
-      ),
-    date = lubridate::mdy(date)
-  ) %>%
-  ggplot() +
-  geom_col(aes( x=date, y=point_diff, fill=(point_diff>0) ) ) +
-  theme_bw() +
-  theme(legend.position= 'none') +
-  scale_x_date(date_breaks="2 weeks", date_labels = "%m/%d") +
-  scale_fill_brewer(palette='Set1') +
-  labs(y='KU Margin of Victory')
-```
-
----
-
-```{r,echo=FALSE}
-read_csv('sample_data/18collegebasketball.csv',
-         col_names=c('gameid', 'home_team', 'home_score',
-                     'away_team', 'away_score', 'date'),
-         col_types=cols(),
-         skip = 1) %>% 
-  filter(home_team == 'Kansas' | away_team == 'Kansas') %>%
-  mutate(
-    point_diff = if_else(
-      home_team=='Kansas',
-      home_score-away_score,
-      away_score-home_score
-      ),
-    date=lubridate::mdy(date)
-  ) %>%
-  ggplot() +
-  geom_col(aes(x=date, y=point_diff, fill=(point_diff>0))) +
-  theme_bw() +
-  theme(legend.position= 'none') +
-  scale_x_date(date_breaks="2 weeks", date_labels = "%m/%d") +
-  scale_fill_brewer(palette='Set1') +
-  labs(y='KU Margin of Victory')
-```
-
----
 
 # Reading from Excel files
 - Package **`readxl`** provides easy functions for reading MS Excel files
@@ -371,10 +313,66 @@ Sys.time()-s
 ```
 
 ---
+# Final Example
+- Reading data in is only the first step in many:
+
+```{r, echo=TRUE, results='hide'}
+read_csv('sample_data/18collegebasketball.csv',
+         col_names=c('gameid', 'home_team', 'home_score',
+                     'away_team', 'away_score', 'date'),
+         col_types=cols(),
+         skip = 1) %>% 
+  filter(home_team == 'Kansas' | away_team == 'Kansas') %>%
+  mutate(
+    point_diff = if_else(
+      home_team == 'Kansas',
+      home_score - away_score,
+      away_score - home_score
+      ),
+    date = lubridate::mdy(date)
+  ) %>%
+  ggplot() +
+  geom_col(aes( x=date, y=point_diff, fill=(point_diff>0) ) ) +
+  theme_bw() +
+  theme(legend.position= 'none') +
+  scale_x_date(date_breaks="2 weeks", date_labels = "%m/%d") +
+  scale_fill_brewer(palette='Set1') +
+  labs(y='KU Margin of Victory')
+```
+
+---
+
+```{r,echo=FALSE}
+read_csv('sample_data/18collegebasketball.csv',
+         col_names=c('gameid', 'home_team', 'home_score',
+                     'away_team', 'away_score', 'date'),
+         col_types=cols(),
+         skip = 1) %>% 
+  filter(home_team == 'Kansas' | away_team == 'Kansas') %>%
+  mutate(
+    point_diff = if_else(
+      home_team=='Kansas',
+      home_score-away_score,
+      away_score-home_score
+      ),
+    date=lubridate::mdy(date)
+  ) %>%
+  ggplot() +
+  geom_col(aes(x=date, y=point_diff, fill=(point_diff>0))) +
+  theme_bw() +
+  theme(legend.position= 'none') +
+  scale_x_date(date_breaks="2 weeks", date_labels = "%m/%d") +
+  scale_fill_brewer(palette='Set1') +
+  labs(y='KU Margin of Victory')
+```
+
+---
 # Other resources
   - Learning R (Cotton) , chapter 12
   - R Cookbook , chapter 5
   - R for Data Science , chapter 11
+  
+  - Get the readr cheat sheet: https://github.com/rstudio/cheatsheets/blob/master/data-import.pdf 
   
 ---
 # Reading html/XML
@@ -457,10 +455,8 @@ weather_data
 ```{r, echo=TRUE}
 weather_json <- httr::content(weather_data, as='text') 
 weather_json <- fromJSON(weather_json)
-
+weather_json %>% head()
 ```
-
-  - Now it's a data frame you can use for 
 
 ---
 #Alternative (1 step from the API):

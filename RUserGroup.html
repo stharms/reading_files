@@ -20,7 +20,7 @@ class: center, middle, inverse, title-slide
 
 
 
----
+
 # Overview
 
 **Goal** : Import data into your R workspace in the form of a data.frame
@@ -40,7 +40,7 @@ Some simple examples:
 ---
 # Reading from common text file types
 
-- base R supports reading text files, e.g. `read.table()`, `read.csv()`, `read.delim()` reads data from text files files with specified delimiters (commas, tabs, spaces, etc.)
+- base R supports reading text files, e.g. **`read.table()`**, **`read.csv()`**, **`read.delim()`** reads data from text files files with specified delimiters (commas, tabs, spaces, etc.)
 
 - Package **`readr`** also provides convenient similar functions with **`read_*()`** but is typically faster than base R
   + Part of the tidyverse collection of packages
@@ -57,11 +57,7 @@ library(readr) # if you just want readr but nothing else
 # How parsers work
 
   1. text file is parsed into a rectangular matrix of strings
-  
-  
   2. column types are determined (or specified by user)
-  
-  
   3. each column of strings is parsed into a vector of a more specific type
 
 ---
@@ -358,41 +354,6 @@ read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/congress
 ## #   incumbent &lt;chr&gt;, termstart &lt;date&gt;, age &lt;dbl&gt;
 ```
 ---
-# Final Example
-- Reading data in is only the first step in many:
-
-
-```r
-read_csv('sample_data/18collegebasketball.csv',
-         col_names=c('gameid', 'home_team', 'home_score',
-                     'away_team', 'away_score', 'date'),
-         col_types=cols(),
-         skip = 1) %&gt;% 
-  filter(home_team == 'Kansas' | away_team == 'Kansas') %&gt;%
-  mutate(
-    point_diff = if_else(
-      home_team == 'Kansas',
-      home_score - away_score,
-      away_score - home_score
-      ),
-    date = lubridate::mdy(date)
-  ) %&gt;%
-  ggplot() +
-  geom_col(aes( x=date, y=point_diff, fill=(point_diff&gt;0) ) ) +
-  theme_bw() +
-  theme(legend.position= 'none') +
-  scale_x_date(date_breaks="2 weeks", date_labels = "%m/%d") +
-  scale_fill_brewer(palette='Set1') +
-  labs(y='KU Margin of Victory')
-```
-
-![](RUserGroup_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
-
----
-
-![](RUserGroup_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
-
----
 
 # Reading from Excel files
 - Package **`readxl`** provides easy functions for reading MS Excel files
@@ -503,7 +464,7 @@ Sys.time()-s
 ```
 
 ```
-## Time difference of 0.1496251 secs
+## Time difference of 0.1703022 secs
 ```
 
 ```r
@@ -513,14 +474,51 @@ Sys.time()-s
 ```
 
 ```
-## Time difference of 0.03587413 secs
+## Time difference of 0.03996897 secs
 ```
+
+---
+# Final Example
+- Reading data in is only the first step in many:
+
+
+```r
+read_csv('sample_data/18collegebasketball.csv',
+         col_names=c('gameid', 'home_team', 'home_score',
+                     'away_team', 'away_score', 'date'),
+         col_types=cols(),
+         skip = 1) %&gt;% 
+  filter(home_team == 'Kansas' | away_team == 'Kansas') %&gt;%
+  mutate(
+    point_diff = if_else(
+      home_team == 'Kansas',
+      home_score - away_score,
+      away_score - home_score
+      ),
+    date = lubridate::mdy(date)
+  ) %&gt;%
+  ggplot() +
+  geom_col(aes( x=date, y=point_diff, fill=(point_diff&gt;0) ) ) +
+  theme_bw() +
+  theme(legend.position= 'none') +
+  scale_x_date(date_breaks="2 weeks", date_labels = "%m/%d") +
+  scale_fill_brewer(palette='Set1') +
+  labs(y='KU Margin of Victory')
+```
+
+![](RUserGroup_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+
+---
+
+![](RUserGroup_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
 
 ---
 # Other resources
   - Learning R (Cotton) , chapter 12
   - R Cookbook , chapter 5
   - R for Data Science , chapter 11
+  
+  - Get the readr cheat sheet: https://github.com/rstudio/cheatsheets/blob/master/data-import.pdf 
   
 ---
 # Reading html/XML
@@ -603,7 +601,7 @@ weather_data
 
 ```
 ## Response [https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json]
-##   Date: 2021-02-07 14:30
+##   Date: 2021-02-13 01:51
 ##   Status: 200
 ##   Content-Type: application/json;charset=utf-8
 ##   Size: 1.24 kB
@@ -624,9 +622,18 @@ weather_data
 ```r
 weather_json &lt;- httr::content(weather_data, as='text') 
 weather_json &lt;- fromJSON(weather_json)
+weather_json %&gt;% head()
 ```
 
-  - Now it's a data frame you can use for 
+```
+##                  DATE STATION LONGITUDE WIND_DIR LATITUDE WIND_SPEED
+## 1 2016-01-01T00:09:00    AUCE     57.50       90   -20.20         40
+## 2 2016-01-01T21:09:00    AUCE     57.50       20   -20.20         20
+## 3 2016-01-02T00:09:00    AUCE     57.50      350   -20.20         20
+## 4 2016-01-02T03:09:00    AUCE     57.50      340   -20.20         20
+## 5 2016-01-02T06:09:00    AUCE     57.50      350   -20.20         30
+## 6 2016-01-02T09:09:00    AUCE     57.50      330   -20.20         30
+```
 
 ---
 #Alternative (1 step from the API):
