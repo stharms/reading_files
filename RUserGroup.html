@@ -45,6 +45,8 @@ Some simple examples:
 - Package **`readr`** also provides convenient similar functions with **`read_*()`** but is typically faster than base R
   + Part of the tidyverse collection of packages
 
+
+
 ```r
 library(tidyverse) # the entire tidyverse
 
@@ -52,6 +54,7 @@ library(readr) # if you just want readr but nothing else
 ```
   
 - **`fread()`** from package **`data.table`** is faster than both of the above, but syntax is less intuitive 
+
 
 ---
 # How parsers work
@@ -261,8 +264,10 @@ head(cbb_games)
 ---
 # Other useful readr functionality
 
+- For large files, use the **`n_max()`** argument to read in the first few lines of a file and examine the basic structure
+
 - After cleaning up data or if you create a new variable, may need to parse the column into they type you want
-  + Use `parse_*` to convert individual columns to the type you want (e.g., `parse_datetime`, `parse_double`, `parse_factor`)
+  + Use **`parse_*()`** to convert individual columns to the type you want (e.g., **`parse_datetime`**, **`parse_double`**, **`parse_factor`**)
   
 &lt;!-- Typical process:  --&gt;
 &lt;!--   1. Read in text as character strings --&gt;
@@ -464,7 +469,7 @@ Sys.time()-s
 ```
 
 ```
-## Time difference of 0.1703022 secs
+## Time difference of 0.1635621 secs
 ```
 
 ```r
@@ -474,7 +479,7 @@ Sys.time()-s
 ```
 
 ```
-## Time difference of 0.03996897 secs
+## Time difference of 0.03193307 secs
 ```
 
 ---
@@ -506,11 +511,11 @@ read_csv('sample_data/18collegebasketball.csv',
   labs(y='KU Margin of Victory')
 ```
 
-![](RUserGroup_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+![](RUserGroup_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
 
 ---
 
-![](RUserGroup_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
+![](RUserGroup_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
 
 ---
 # Other resources
@@ -575,11 +580,11 @@ ggplot(data=kscountymap, aes(x = long, y = lat, group = subregion)) +
   scale_fill_gradient2(low="red", high="blue")
 ```
 
-![](RUserGroup_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
+![](RUserGroup_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
 
 ---
 
-![](RUserGroup_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
+![](RUserGroup_files/figure-html/unnamed-chunk-24-1.png)&lt;!-- --&gt;
 
 ---
 # Converting JSON
@@ -601,7 +606,7 @@ weather_data
 
 ```
 ## Response [https://www.ncei.noaa.gov/access/services/data/v1?dataset=global-marine&amp;dataTypes=WIND_DIR,WIND_SPEED&amp;stations=AUCE&amp;startDate=2016-01-01&amp;endDate=2016-01-02&amp;boundingBox=90,-180,-90,180&amp;format=json]
-##   Date: 2021-02-13 01:51
+##   Date: 2021-02-13 18:36
 ##   Status: 200
 ##   Content-Type: application/json;charset=utf-8
 ##   Size: 1.24 kB

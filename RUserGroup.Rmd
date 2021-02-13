@@ -52,6 +52,10 @@ Some simple examples:
 
 - Package **`readr`** also provides convenient similar functions with **`read_*()`** but is typically faster than base R
   + Part of the tidyverse collection of packages
+```{r, eval=FALSE}
+install.packages("tidyverse")
+```
+
 ```{r, echo=T}
 library(tidyverse) # the entire tidyverse
 
@@ -59,6 +63,7 @@ library(readr) # if you just want readr but nothing else
 ```
   
 - **`fread()`** from package **`data.table`** is faster than both of the above, but syntax is less intuitive 
+
 
 ---
 # How parsers work
@@ -175,8 +180,10 @@ head(cbb_games)
 ---
 # Other useful readr functionality
 
+- For large files, use the **`n_max()`** argument to read in the first few lines of a file and examine the basic structure
+
 - After cleaning up data or if you create a new variable, may need to parse the column into they type you want
-  + Use `parse_*` to convert individual columns to the type you want (e.g., `parse_datetime`, `parse_double`, `parse_factor`)
+  + Use **`parse_*()`** to convert individual columns to the type you want (e.g., **`parse_datetime`**, **`parse_double`**, **`parse_factor`**)
   
 <!-- Typical process:  -->
 <!--   1. Read in text as character strings -->
